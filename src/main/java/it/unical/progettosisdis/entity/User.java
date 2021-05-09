@@ -3,6 +3,7 @@ package it.unical.progettosisdis.entity;
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.util.Set;
 
 @Entity
 @Table(name = "users", uniqueConstraints = {
@@ -26,6 +27,9 @@ public class User {
     @NotBlank
     @Size(max = 120)
     private String password;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user", targetEntity = Credentials.class)
+    private Set<Credentials> credentials;
 
     public User() { }
 
@@ -66,5 +70,13 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public Set<Credentials> getCredentials() {
+        return credentials;
+    }
+
+    public void setCredentials(Set<Credentials> credentials) {
+        this.credentials = credentials;
     }
 }

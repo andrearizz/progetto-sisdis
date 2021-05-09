@@ -6,6 +6,8 @@ import io.jsonwebtoken.security.Keys;
 import it.unical.progettosisdis.security.service.UserDetailsImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import io.jsonwebtoken.*;
@@ -14,12 +16,14 @@ import java.security.Key;
 import java.util.Date;
 
 @Component
+@ConfigurationProperties(prefix = "app.andrea.secret.jwt.key")
 public class JwtUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
 
-    private final String jwtSecret = "fjwergbrnfjemqjfnwrg3brunfien298249fm4n8mf438gmf932m48g3mf92m48gn3mf493g" +
-            "24g8h8f9248n3g8vm385v9243n5ygnirejmfjkfgh93";
+    @Value("${app.andrea.secret.jwt.key}")
+    private String jwtSecret;
+
     private final int jwtExpirationMs = 86400000;
 
     public String generateJwtToken(Authentication authentication) {
