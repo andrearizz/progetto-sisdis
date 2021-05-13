@@ -2,7 +2,7 @@ package it.unical.progettosisdis.payload.request;
 
 import javax.validation.constraints.NotBlank;
 
-public class seePwRequest {
+public class DeleteRequest {
 
     @NotBlank
     private String url;

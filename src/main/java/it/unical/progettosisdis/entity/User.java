@@ -28,7 +28,7 @@ public class User {
     @Size(max = 120)
     private String password;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user", targetEntity = Credentials.class)
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user", targetEntity = Credentials.class, cascade = CascadeType.REMOVE)
     private Set<Credentials> credentials;
 
     public User() { }
