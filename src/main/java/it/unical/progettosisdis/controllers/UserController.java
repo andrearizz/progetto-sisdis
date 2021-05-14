@@ -55,8 +55,6 @@ public class UserController {
     @Value("${app.andrea.secret.key}")
     private String secretKey;
 
-    @Value("${app.andrea.secret.iv}")
-    private String iv;
 
     private static final Pattern patternUrl = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
 
@@ -119,8 +117,8 @@ public class UserController {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
-        List<Credentials> allCredentials = credentialsRepository.findAllByUser(user).
-                orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+        List<Credentials> allCredentials = credentialsRepository.findAllByUser(user)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
 
         List<CredentialsResponse> credentials = new LinkedList<>();

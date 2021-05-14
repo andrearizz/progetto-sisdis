@@ -31,6 +31,9 @@ public class User {
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "user", targetEntity = Credentials.class, cascade = CascadeType.REMOVE)
     private Set<Credentials> credentials;
 
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user", targetEntity = SecureNotes.class, cascade = CascadeType.REMOVE)
+    private Set<SecureNotes> secureNotes;
+
     public User() { }
 
     public User(String username, String email, String password) {
@@ -78,5 +81,13 @@ public class User {
 
     public void setCredentials(Set<Credentials> credentials) {
         this.credentials = credentials;
+    }
+
+    public Set<SecureNotes> getSecureNotes() {
+        return secureNotes;
+    }
+
+    public void setSecureNotes(Set<SecureNotes> secureNotes) {
+        this.secureNotes = secureNotes;
     }
 }
