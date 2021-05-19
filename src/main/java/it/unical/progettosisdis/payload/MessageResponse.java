@@ -1,4 +1,4 @@
-package it.unical.progettosisdis.payload.response;
+package it.unical.progettosisdis.payload;
 
 public class MessageResponse {
 

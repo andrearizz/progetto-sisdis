@@ -1,11 +1,18 @@
 package it.unical.progettosisdis.security.service;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import it.unical.progettosisdis.entity.Groups;
+import it.unical.progettosisdis.entity.Role;
 import it.unical.progettosisdis.entity.User;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class UserDetailsImpl implements UserDetails {
     private static final long serialVersionUID = 1L;
@@ -19,16 +26,34 @@ public class UserDetailsImpl implements UserDetails {
     @JsonIgnore
     private String password;
 
-    public UserDetailsImpl(Long id, String username, String email, String password) {
+    private Map<Groups, Role> groupsRole;
+
+    private Set<Groups> groups;
+
+    private Collection<? extends GrantedAuthority> authorities;
+
+    public UserDetailsImpl(Long id, String username, String email, String password, Map<Groups, Role> groupsRole,
+                           Collection<? extends GrantedAuthority> authorities, Set<Groups> groups) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.password = password;
+        this.groupsRole = groupsRole;
+        this.authorities = authorities;
+        this.groups = groups;
+
     }
 
-    public static UserDetailsImpl build(User user) {
 
-        return new UserDetailsImpl(user.getId(), user.getUsername(), user.getEmail(), user.getPassword());
+    public static UserDetailsImpl build(User user) {
+        List<GrantedAuthority> authorities = user.getRoles()
+                .stream()
+                .map(role -> role.getName().getGrantedAuthorities())
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
+
+        return new UserDetailsImpl(user.getId(), user.getUsername(), user.getEmail(),
+                user.getPassword(),user.getGroup_user_role(), authorities, user.getGroups());
     }
 
     public Long getId() {
@@ -37,7 +62,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return null;
+        return authorities;
     }
 
     @Override
@@ -72,6 +97,22 @@ public class UserDetailsImpl implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    public Map<Groups, Role> getGroupsRole() {
+        return groupsRole;
+    }
+
+    public void setGroupsRole(Map<Groups, Role> groupsRole) {
+        this.groupsRole = groupsRole;
+    }
+
+    public Set<Groups> getGroups() {
+        return groups;
+    }
+
+    public void setGroups(Set<Groups> groups) {
+        this.groups = groups;
     }
 
     @Override

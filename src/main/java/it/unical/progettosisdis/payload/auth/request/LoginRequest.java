@@ -1,4 +1,4 @@
-package it.unical.progettosisdis.payload.request;
+package it.unical.progettosisdis.payload.auth.request;
 
 import javax.validation.constraints.NotBlank;
 

@@ -8,11 +8,11 @@ import javax.validation.constraints.NotNull;
 public class Credentials {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "userId", referencedColumnName = "id")
+
     private User user;
 
     @NotBlank
@@ -65,5 +65,13 @@ public class Credentials {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }

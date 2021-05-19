@@ -1,9 +1,10 @@
-package it.unical.progettosisdis.payload.request;
+package it.unical.progettosisdis.payload.auth.request;
 
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.util.Set;
 
 public class SignupRequest {
 
@@ -43,4 +44,5 @@ public class SignupRequest {
     public void setPassword(String password) {
         this.password = password;
     }
+
 }

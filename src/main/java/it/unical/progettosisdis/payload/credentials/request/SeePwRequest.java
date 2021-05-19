@@ -1,8 +1,8 @@
-package it.unical.progettosisdis.payload.request;
+package it.unical.progettosisdis.payload.credentials.request;
 
 import javax.validation.constraints.NotBlank;
 
-public class seePwRequest {
+public class SeePwRequest {
 
     @NotBlank
     private String url;

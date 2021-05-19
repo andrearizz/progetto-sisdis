@@ -1,19 +1,21 @@
 package it.unical.progettosisdis.entity;
 
-
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 
 @Entity
-public class SecureNotes {
+public class SecureNotesGroup {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @Version
+    private Long version;
 
-    private User user;
+    @ManyToOne
+    @JoinColumn(name = "groupId", referencedColumnName = "id")
+    private Groups groups;
 
     @NotBlank
     private String title;
@@ -21,12 +23,28 @@ public class SecureNotes {
     @NotBlank
     private String content;
 
-    public SecureNotes() { }
+    public SecureNotesGroup() { }
 
-    public SecureNotes(User user, String title, String content) {
-        this.user = user;
+    public SecureNotesGroup(Groups groups, String title, String content) {
+        this.groups = groups;
         this.title = title;
         this.content = content;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Groups getGroups() {
+        return groups;
+    }
+
+    public void setGroups(Groups groups) {
+        this.groups = groups;
     }
 
     public String getTitle() {
@@ -43,13 +61,5 @@ public class SecureNotes {
 
     public void setContent(String content) {
         this.content = content;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public User getUser() {
-        return user;
     }
 }

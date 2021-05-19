@@ -1,4 +1,4 @@
-package it.unical.progettosisdis.payload.response;
+package it.unical.progettosisdis.payload.credentials.response;
 
 public class CredentialsResponse {
 

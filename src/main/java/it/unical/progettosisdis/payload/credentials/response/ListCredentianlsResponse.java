@@ -1,4 +1,6 @@
-package it.unical.progettosisdis.payload.response;
+package it.unical.progettosisdis.payload.credentials.response;
+
+import it.unical.progettosisdis.payload.credentials.response.CredentialsResponse;
 
 import java.util.List;
 

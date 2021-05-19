@@ -3,6 +3,9 @@ package it.unical.progettosisdis.entity;
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Entity
@@ -28,11 +31,34 @@ public class User {
     @Size(max = 120)
     private String password;
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private Set<Role> roles = new HashSet<>();
+
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "user", targetEntity = Credentials.class, cascade = CascadeType.REMOVE)
     private Set<Credentials> credentials;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "user", targetEntity = SecureNotes.class, cascade = CascadeType.REMOVE)
     private Set<SecureNotes> secureNotes;
+
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "group_user",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "group_id"))
+    private Set<Groups> groups = new HashSet<>();
+
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "group_user_role",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "roles_id"))
+    @MapKeyJoinColumn(name = "group_id")
+    private Map<Groups, Role> group_user_role = new HashMap<>();
 
     public User() { }
 
@@ -75,6 +101,14 @@ public class User {
         this.password = password;
     }
 
+    public Set<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles;
+    }
+
     public Set<Credentials> getCredentials() {
         return credentials;
     }
@@ -90,4 +124,33 @@ public class User {
     public void setSecureNotes(Set<SecureNotes> secureNotes) {
         this.secureNotes = secureNotes;
     }
+
+    public Map<Groups, Role> getGroup_user_role() {
+        return group_user_role;
+    }
+
+    public void setGroup_user_role(Map<Groups, Role> group_user_role) {
+        this.group_user_role = group_user_role;
+    }
+
+    public Set<Groups> getGroups() {
+        return groups;
+    }
+
+    public void setGroups(Set<Groups> groups) {
+        this.groups = groups;
+    }
+
+    @PreRemove
+    private void removeGroupFromUser() {
+        for(Groups g : group_user_role.keySet()) {
+            g.getUsers().remove(this);
+        }
+        roles.clear();
+    }
+
+    public boolean addGroup(Groups group) {
+        return groups.add(group);
+    }
+
 }

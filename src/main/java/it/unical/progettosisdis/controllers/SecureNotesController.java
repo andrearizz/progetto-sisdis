@@ -3,19 +3,20 @@ package it.unical.progettosisdis.controllers;
 
 import it.unical.progettosisdis.entity.SecureNotes;
 import it.unical.progettosisdis.entity.User;
-import it.unical.progettosisdis.payload.request.EditNoteRequest;
-import it.unical.progettosisdis.payload.request.SecureNoteRequest;
-import it.unical.progettosisdis.payload.request.ContentRequest;
-import it.unical.progettosisdis.payload.response.ListSecureNoteResponse;
-import it.unical.progettosisdis.payload.response.MessageResponse;
-import it.unical.progettosisdis.payload.response.SecureContentResponse;
-import it.unical.progettosisdis.payload.response.SecureNotesResponse;
+import it.unical.progettosisdis.payload.notes.request.EditNoteRequest;
+import it.unical.progettosisdis.payload.notes.request.SecureNoteRequest;
+import it.unical.progettosisdis.payload.notes.request.ContentRequest;
+import it.unical.progettosisdis.payload.notes.response.ListSecureNoteResponse;
+import it.unical.progettosisdis.payload.MessageResponse;
+import it.unical.progettosisdis.payload.notes.response.SecureContentResponse;
+import it.unical.progettosisdis.payload.notes.response.SecureNotesResponse;
 import it.unical.progettosisdis.repository.SecureNotesRepository;
 import it.unical.progettosisdis.repository.UserRepository;
 import it.unical.progettosisdis.utils.Encrypter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
@@ -37,6 +38,7 @@ import java.util.List;
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/secure-notes")
+@PreAuthorize("hasRole('USER')")
 public class SecureNotesController {
 
 
@@ -75,6 +77,7 @@ public class SecureNotesController {
     }
 
     @GetMapping("/getAllNotes")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> getAllNotes() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
@@ -123,7 +126,7 @@ public class SecureNotesController {
         return ResponseEntity.ok(new MessageResponse("Note deleted successfully"));
     }
 
-    @PostMapping("/editNote")
+    @PutMapping("/editNote")
     public ResponseEntity<?> editNote(@Valid @RequestBody EditNoteRequest req) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeySpecException, InvalidKeyException, UnsupportedEncodingException, InvalidParameterSpecException {
 
         long id = req.getId();

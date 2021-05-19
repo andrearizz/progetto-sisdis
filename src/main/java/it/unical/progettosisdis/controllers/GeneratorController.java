@@ -1,9 +1,8 @@
 package it.unical.progettosisdis.controllers;
 
 
-import it.unical.progettosisdis.payload.request.LoginRequest;
-import it.unical.progettosisdis.payload.request.PwdReq;
-import it.unical.progettosisdis.payload.response.PwdRes;
+import it.unical.progettosisdis.payload.generator.request.PwdReq;
+import it.unical.progettosisdis.payload.generator.response.PwdRes;
 import it.unical.progettosisdis.utils.Generator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

@@ -1,4 +1,4 @@
-package it.unical.progettosisdis.payload.request;
+package it.unical.progettosisdis.payload.credentials.request;
 
 public class EditRequest {
 

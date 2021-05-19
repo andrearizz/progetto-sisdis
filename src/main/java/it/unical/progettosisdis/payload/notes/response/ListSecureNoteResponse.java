@@ -1,4 +1,6 @@
-package it.unical.progettosisdis.payload.response;
+package it.unical.progettosisdis.payload.notes.response;
+
+import it.unical.progettosisdis.payload.notes.response.SecureNotesResponse;
 
 import java.util.List;
 

@@ -18,16 +18,16 @@ public class Generator {
 
         if (containsChar) {
             CharacterData lowerCaseChars = EnglishCharacterData.LowerCase;
-            CharacterRule lowerCaseRule = new CharacterRule(lowerCaseChars,3);
+            CharacterRule lowerCaseRule = new CharacterRule(lowerCaseChars,1);
             rules.add(lowerCaseRule);
             CharacterData upperCaseChars = EnglishCharacterData.UpperCase;
-            CharacterRule upperCaseRule = new CharacterRule(upperCaseChars,3);
+            CharacterRule upperCaseRule = new CharacterRule(upperCaseChars,1);
             rules.add(upperCaseRule);
         }
 
         if(containsDigit) {
             CharacterData digitChars = EnglishCharacterData.Digit;
-            CharacterRule digitRule = new CharacterRule(digitChars,3);
+            CharacterRule digitRule = new CharacterRule(digitChars,1);
             rules.add(digitRule);
         }
 

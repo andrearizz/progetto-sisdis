@@ -3,24 +3,26 @@ package it.unical.progettosisdis.controllers;
 
 import it.unical.progettosisdis.entity.Credentials;
 import it.unical.progettosisdis.entity.User;
-import it.unical.progettosisdis.payload.request.DeleteRequest;
-import it.unical.progettosisdis.payload.request.EditRequest;
-import it.unical.progettosisdis.payload.request.SavePwRequest;
-import it.unical.progettosisdis.payload.request.seePwRequest;
-import it.unical.progettosisdis.payload.response.CredentialsResponse;
-import it.unical.progettosisdis.payload.response.ListCredentianlsResponse;
-import it.unical.progettosisdis.payload.response.MessageResponse;
+import it.unical.progettosisdis.payload.credentials.request.EditRequest;
+import it.unical.progettosisdis.payload.credentials.request.SavePwRequest;
+import it.unical.progettosisdis.payload.credentials.request.SeePwRequest;
+import it.unical.progettosisdis.payload.credentials.response.CredentialsResponse;
+import it.unical.progettosisdis.payload.ETagProvaResponse;
+import it.unical.progettosisdis.payload.credentials.response.ListCredentianlsResponse;
+import it.unical.progettosisdis.payload.MessageResponse;
 import it.unical.progettosisdis.repository.CredentialsRepository;
 import it.unical.progettosisdis.repository.UserRepository;
 import it.unical.progettosisdis.utils.Encrypter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.WebRequest;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -34,13 +36,14 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/user")
+@PreAuthorize("hasRole('ROLE_USER')")
 public class UserController {
 
     @Autowired
@@ -96,7 +99,7 @@ public class UserController {
     }
 
     @PostMapping("/seePw")
-    public ResponseEntity<?> getPassword(@Valid @RequestBody seePwRequest req) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeySpecException, InvalidKeyException {
+    public ResponseEntity<?> getPassword(@Valid @RequestBody SeePwRequest req) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeySpecException, InvalidKeyException {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
@@ -117,10 +120,12 @@ public class UserController {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
+        /*
         List<Credentials> allCredentials = credentialsRepository.findAllByUser(user)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+         */
 
-
+        Set<Credentials> allCredentials = user.getCredentials();
         List<CredentialsResponse> credentials = new LinkedList<>();
         for(Credentials c : allCredentials) {
             String protocol = "";
@@ -154,7 +159,7 @@ public class UserController {
     }
 
 
-    @PostMapping("/edit")
+    @PutMapping("/edit")
     public ResponseEntity<?> edit(@Valid @RequestBody EditRequest req) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, NoSuchAlgorithmException, BadPaddingException, InvalidKeySpecException, InvalidParameterSpecException, InvalidKeyException {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
@@ -182,4 +187,55 @@ public class UserController {
         credentialsRepository.save(credentials);
         return ResponseEntity.ok(new MessageResponse("Credential modified successfully!"));
     }
+
+    @GetMapping("/getETag/{id}")
+    public ResponseEntity<?> getETag(@PathVariable Long id) {
+        Credentials credentials = credentialsRepository
+                .findCredentialsById(id)
+                .orElseThrow(() -> new RuntimeException("Credential not found with id " + id));
+
+        return ResponseEntity.ok()
+                .eTag("\"" + "provaVersion" + "\"")
+                .body(new ETagProvaResponse(credentials.getUrl(), credentials.getLogin(), credentials.getPassword()));
+    }
+
+    @PutMapping("/putETag/{id}")
+    public ResponseEntity<?> putETag(WebRequest request, @PathVariable Long id, @Valid @RequestBody EditRequest ereq) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, NoSuchAlgorithmException, BadPaddingException, InvalidKeySpecException, InvalidParameterSpecException, InvalidKeyException {
+        Credentials credentials = credentialsRepository
+                .findCredentialsById(id)
+                .orElseThrow(() -> new RuntimeException("Credential not found with id " + id));
+
+        String ifMatchValue = request.getHeader("If-Match");
+        if(ifMatchValue == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        if(!ifMatchValue.equals("\"" + "provaVersion" + "\"")) {
+            return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED).build();
+        }
+
+        try {
+            if (ereq.isUrlModified()) {
+                credentials.setUrl(ereq.getUrl());
+            }
+
+            if (ereq.isLoginModified()) {
+                credentials.setLogin(ereq.getLogin());
+            }
+
+            if (ereq.isPasswordModified()) {
+                String encryptedPassword = encrypter.encrypt(ereq.getPassword(), secretKey);
+                credentials.setPassword(encryptedPassword);
+            }
+
+            credentialsRepository.save(credentials);
+            return ResponseEntity.ok()
+                    .eTag("\"" + "provaVersion2" + "\"")
+                    .body(new MessageResponse("Credentials update successfully"));
+        } catch (OptimisticLockingFailureException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+
+    }
+
 }
