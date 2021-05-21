@@ -2,6 +2,7 @@ package it.unical.progettosisdis.entity;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
+import java.util.Date;
 
 @Entity
 public class SecureNotesGroup {
@@ -23,12 +24,26 @@ public class SecureNotesGroup {
     @NotBlank
     private String content;
 
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date creationDateTime;
+
+    @NotBlank
+    private String userLastChange;
+
+    @NotBlank
+    private String userCreator;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date dateLastModify;
+
     public SecureNotesGroup() { }
 
-    public SecureNotesGroup(Groups groups, String title, String content) {
+    public SecureNotesGroup(Groups groups, String title, String content, Date creationDateTime, String userCreator) {
         this.groups = groups;
         this.title = title;
         this.content = content;
+        this.creationDateTime = creationDateTime;
+        this.userCreator = userCreator;
     }
 
     public Long getId() {
@@ -61,5 +76,45 @@ public class SecureNotesGroup {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
+    }
+
+    public Date getCreationDateTime() {
+        return creationDateTime;
+    }
+
+    public void setCreationDateTime(Date creationDateTime) {
+        this.creationDateTime = creationDateTime;
+    }
+
+    public String getUserLastChange() {
+        return userLastChange;
+    }
+
+    public void setUserLastChange(String userLastChange) {
+        this.userLastChange = userLastChange;
+    }
+
+    public String getUserCreator() {
+        return userCreator;
+    }
+
+    public void setUserCreator(String userCreator) {
+        this.userCreator = userCreator;
+    }
+
+    public Date getDateLastModify() {
+        return dateLastModify;
+    }
+
+    public void setDateLastModify(Date dateLastModify) {
+        this.dateLastModify = dateLastModify;
     }
 }

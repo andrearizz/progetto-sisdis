@@ -77,7 +77,6 @@ public class SecureNotesController {
     }
 
     @GetMapping("/getAllNotes")
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> getAllNotes() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)

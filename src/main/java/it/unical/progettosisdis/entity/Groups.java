@@ -3,6 +3,7 @@ package it.unical.progettosisdis.entity;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -28,11 +29,19 @@ public class Groups {
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "groups", targetEntity = SecureNotesGroup.class, cascade = CascadeType.REMOVE)
     private Set<SecureNotesGroup> secureNotesGroups;
 
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date creationDateTime;
+
+    @NotBlank
+    private String creatorUsername;
+
     public Groups() { }
 
-    public Groups(String name, String joinCode) {
+    public Groups(String name, String joinCode, Date creationDateTime, String creatorUsername) {
         this.name = name;
         this.joinCode = joinCode;
+        this.creationDateTime = creationDateTime;
+        this.creatorUsername = creatorUsername;
     }
 
     public Long getId() {
@@ -82,6 +91,22 @@ public class Groups {
 
     public void setSecureNotesGroups(Set<SecureNotesGroup> secureNotesGroups) {
         this.secureNotesGroups = secureNotesGroups;
+    }
+
+    public Date getCreationDateTime() {
+        return creationDateTime;
+    }
+
+    public void setCreationDateTime(Date creationDateTime) {
+        this.creationDateTime = creationDateTime;
+    }
+
+    public String getCreatorUsername() {
+        return creatorUsername;
+    }
+
+    public void setCreatorUsername(String creatorUsername) {
+        this.creatorUsername = creatorUsername;
     }
 
     @PreRemove

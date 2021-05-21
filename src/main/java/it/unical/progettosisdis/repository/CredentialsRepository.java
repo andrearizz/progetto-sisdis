@@ -22,4 +22,6 @@ public interface CredentialsRepository extends JpaRepository<Credentials, Long> 
     Boolean existsByUserAndUrlAndLogin(User user, String url, String login);
 
     Optional<Credentials> findCredentialsById(Long id);
+
+    Optional<Credentials> findCredentialsByUserAndId(User user, Long id);
 }

@@ -150,9 +150,8 @@ public class UserController {
 
         //String url = protocol + "://" + site;
 
-        Credentials credentials = credentialsRepository
-                .findCredentialsById(id)
-                .orElseThrow(() -> new RuntimeException("Credential not found with id " + id));
+        Credentials credentials = credentialsRepository.findCredentialsByUserAndId(user ,id)
+                .orElseThrow(() -> new RuntimeException("Credential not found with id " + id + " or user" + username));
 
         credentialsRepository.delete(credentials);
         return ResponseEntity.ok(new MessageResponse("Credential deleted successfully"));
