@@ -91,32 +91,4 @@ public class Groups {
             u.getGroups().remove(this);
         }
     }
-
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Groups)) return false;
-
-        Groups groups = (Groups) o;
-
-        if (id != null ? !id.equals(groups.id) : groups.id != null) return false;
-        if (name != null ? !name.equals(groups.name) : groups.name != null) return false;
-        if (joinCode != null ? !joinCode.equals(groups.joinCode) : groups.joinCode != null) return false;
-        if (users != null ? !users.equals(groups.users) : groups.users != null) return false;
-        if (credentialsGroups != null ? !credentialsGroups.equals(groups.credentialsGroups) : groups.credentialsGroups != null)
-            return false;
-        return secureNotesGroups != null ? secureNotesGroups.equals(groups.secureNotesGroups) : groups.secureNotesGroups == null;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = id != null ? id.hashCode() : 0;
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + (joinCode != null ? joinCode.hashCode() : 0);
-        result = 31 * result + (users != null ? users.hashCode() : 0);
-        result = 31 * result + (credentialsGroups != null ? credentialsGroups.hashCode() : 0);
-        result = 31 * result + (secureNotesGroups != null ? secureNotesGroups.hashCode() : 0);
-        return result;
-    }
 }

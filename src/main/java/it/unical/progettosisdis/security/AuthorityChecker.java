@@ -18,13 +18,36 @@ public class AuthorityChecker {
 
     @Autowired
     GroupRepository groupRepository;
-    
+
+
+    /*
     public boolean hasTheAuthority(Authentication authentication, Long id, String authority) {
         Groups groups = groupRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Group not found"));
         UserDetailsImpl user = (UserDetailsImpl) authentication.getPrincipal();
         Role role = null;
         for(Groups g : user.getGroups()){
+            if(g.getId().equals(groups.getId()))
+                role = user.getGroupsRole().get(g);
+        }
+        assert role != null;
+        Set<EPermission> x = role.getName().getPermissions();
+        for (EPermission p : x) {
+            if(p.getPermission().equals(authority))
+                return true;
+        }
+        return false;
+    }
+
+     */
+    public boolean hasTheAuthority(Authentication authentication, Long id, String authority) {
+
+        Groups groups = groupRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+        UserDetailsImpl user = (UserDetailsImpl) authentication.getPrincipal();
+
+        Role role = null;
+        for(Groups g : user.getGroupsRole().keySet()) {
             if(g.getId().equals(groups.getId()))
                 role = user.getGroupsRole().get(g);
         }

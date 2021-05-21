@@ -20,10 +20,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -61,10 +58,8 @@ public class GroupController {
 
         Map<Groups, Role> groupsRoleMap = user.getGroup_user_role();
 
-        Set<Role> roles = user.getRoles();
         Role adminRole = roleRepository.findByName(ERole.ROLE_GROUP_ADMIN)
                 .orElseThrow(() -> new RuntimeException("Error: Default role is not found"));
-        roles.add(adminRole);
 
         if(!user.addGroup(group)) {
             ResponseEntity
@@ -79,7 +74,7 @@ public class GroupController {
     }
 
     @GetMapping("/getAll/{userId}")
-    @PreAuthorize("@authorityChecker.hasTheAuthority(authentication, #id, 'group:read')")
+    @PreAuthorize("@authorityChecker.hasTheAuthority(authentication, #userId, 'group:read')")
     public ResponseEntity<?> getAll(@PathVariable Long userId) {
 
         User user = userRepository.findById(userId)
@@ -109,7 +104,7 @@ public class GroupController {
 
 
     @PutMapping("/changePermisison/{groupId}")
-    @PreAuthorize("@authorityChecker.hasTheAuthority(authentication, #id, 'group:modify')")
+    @PreAuthorize("@authorityChecker.hasTheAuthority(authentication, #groupId, 'group:modify')")
     public ResponseEntity<?> changePermission(@PathVariable Long groupId,
                                               @Valid @RequestBody ChangePermissionRequest request) {
 
@@ -141,9 +136,6 @@ public class GroupController {
         Role role = roleRepository.findByName(ERole.ROLE_GROUP_USER_BAS)
                 .orElseThrow(() -> new RuntimeException("No role found"));
 
-        Set<Role> roles = user.getRoles();
-        roles.add(role);
-
         if(!user.addGroup(groups)) {
             ResponseEntity
                     .badRequest()
@@ -156,6 +148,7 @@ public class GroupController {
         groupRepository.save(groups);
         return ResponseEntity.ok(new MessageResponse("You have join the group"));
     }
+
 
 
 }
