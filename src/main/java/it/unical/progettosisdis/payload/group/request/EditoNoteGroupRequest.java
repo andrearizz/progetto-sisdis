@@ -5,11 +5,6 @@ public class EditoNoteGroupRequest {
     private String title;
     private String content;
 
-    public EditoNoteGroupRequest(String title, String content) {
-        this.title = title;
-        this.content = content;
-    }
-
     public String getTitle() {
         return title;
     }

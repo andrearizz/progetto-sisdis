@@ -4,9 +4,6 @@ public class ChangePermissionRequest {
 
     private String usernameToChange;
 
-    // true means add permission, false means remove permission
-    private boolean modeAdd;
-
     private String permission;
 
     public String getUsernameToChange() {
@@ -17,13 +14,6 @@ public class ChangePermissionRequest {
         this.usernameToChange = usernameToChange;
     }
 
-    public boolean isModeAdd() {
-        return modeAdd;
-    }
-
-    public void setMode(boolean modeAdd) {
-        this.modeAdd = modeAdd;
-    }
 
     public String getPermission() {
         return permission;

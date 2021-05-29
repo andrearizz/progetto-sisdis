@@ -6,18 +6,18 @@ import java.util.List;
 
 public class ListGroupResponse {
 
-    List<GetGroupResponse> listResponse;
+    private List<GetGroupResponse> groups;
 
-    public ListGroupResponse(List<GetGroupResponse> listResponse) {
-        this.listResponse = listResponse;
+    public ListGroupResponse(List<GetGroupResponse> groups) {
+        this.groups = groups;
     }
 
     public List<GetGroupResponse> getListResponse() {
-        return listResponse;
+        return groups;
     }
 
     public void setListResponse(List<GetGroupResponse> listResponse) {
-        this.listResponse = listResponse;
+        this.groups = groups;
     }
 }
 

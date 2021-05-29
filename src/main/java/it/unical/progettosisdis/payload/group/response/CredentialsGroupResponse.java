@@ -14,22 +14,32 @@ public class CredentialsGroupResponse {
 
     private String lastChanger;
 
-    private Date changeTamestamp;
 
-    private Date creationTime;
+    private String dayCreation;
+    private String hoursCreation;
+
+    private String dayLastModify;
+    private String hoursLastModify;
+
 
     private String creator;
 
+    private String version;
+
     public CredentialsGroupResponse(String url, String login, String protocol, Long id, String lastChanger,
-                                    Date changeTamestamp, Date creationTime, String creator) {
+                                    String dayCreation, String hoursCreation, String dayLastModify,
+                                    String hoursLastModify, String creator, String version) {
         this.url = url;
         this.login = login;
         this.protocol = protocol;
         this.id = id;
         this.lastChanger = lastChanger;
-        this.changeTamestamp = changeTamestamp;
-        this.creationTime = creationTime;
+        this.dayCreation = dayCreation;
+        this.hoursCreation = hoursCreation;
+        this.dayLastModify = dayLastModify;
+        this.hoursLastModify = hoursLastModify;
         this.creator = creator;
+        this.version = version;
     }
 
     public String getUrl() {
@@ -72,20 +82,36 @@ public class CredentialsGroupResponse {
         this.lastChanger = lastChanger;
     }
 
-    public Date getChangeTamestamp() {
-        return changeTamestamp;
+    public String getDayCreation() {
+        return dayCreation;
     }
 
-    public void setChangeTamestamp(Date changeTamestamp) {
-        this.changeTamestamp = changeTamestamp;
+    public void setDayCreation(String dayCreation) {
+        this.dayCreation = dayCreation;
     }
 
-    public Date getCreationTime() {
-        return creationTime;
+    public String getHoursCreation() {
+        return hoursCreation;
     }
 
-    public void setCreationTime(Date creationTime) {
-        this.creationTime = creationTime;
+    public void setHoursCreation(String hoursCreation) {
+        this.hoursCreation = hoursCreation;
+    }
+
+    public String getDayLastModify() {
+        return dayLastModify;
+    }
+
+    public void setDayLastModify(String dayLastModify) {
+        this.dayLastModify = dayLastModify;
+    }
+
+    public String getHoursLastModify() {
+        return hoursLastModify;
+    }
+
+    public void setHoursLastModify(String hoursLastModify) {
+        this.hoursLastModify = hoursLastModify;
     }
 
     public String getCreator() {
@@ -94,5 +120,13 @@ public class CredentialsGroupResponse {
 
     public void setCreator(String creator) {
         this.creator = creator;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
     }
 }

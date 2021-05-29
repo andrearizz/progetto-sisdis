@@ -29,6 +29,9 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -69,7 +72,7 @@ public class GroupController {
 
 
     @PostMapping("/createGroup")
-    public ResponseEntity<?> createGroup(@Valid @RequestBody CreateGroupRequest request) {
+    public ResponseEntity<?> createGroup(@Valid @RequestBody CreateGroupRequest request) throws ParseException {
 
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
@@ -101,21 +104,44 @@ public class GroupController {
         return ResponseEntity.ok(new MessageResponse("Group creation successfully"));
     }
 
-    @GetMapping("/getAll/{userId}")
-    @PreAuthorize("@authorityChecker.hasTheAuthority(authentication, #userId, 'group:read')")
-    public ResponseEntity<?> getAll(@PathVariable Long userId) {
+    @GetMapping("/getAll")
+    //@PreAuthorize("@authorityChecker.hasTheAuthority(authentication, #userId, 'group:read')")
+    public ResponseEntity<?> getAll() {
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
-       Set<Groups> groups = user.getGroups();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+        Set<Groups> groups = user.getGroups();
 
-       List<GetGroupResponse> groupsResponse = new LinkedList<>();
-       for(Groups g : groups) {
-           groupsResponse.add(new GetGroupResponse(g.getId(), g.getName(), g.getJoinCode()));
+        List<GetGroupResponse> groupsResponse = new LinkedList<>();
+        for(Groups g : groups) {
+           Date date = g.getCreationDateTime();
+           DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+           String strDate = dateFormat.format(date);
+           String day = strDate.substring(0,10);
+           String hours = strDate.substring(11);
+           groupsResponse.add(new GetGroupResponse(g.getId(), g.getName(), g.getJoinCode(), day, hours,
+                   g.getCreatorUsername()));
        }
 
         return ResponseEntity.ok(new ListGroupResponse(groupsResponse));
+    }
+
+    @GetMapping("/getMembers/{groupId}")
+    @PreAuthorize("@authorityChecker.hasTheAuthority(authentication, #groupId, 'group:read')")
+    public ResponseEntity<?> getGroupMembers(@PathVariable Long groupId){
+
+        Groups group = groupRepository
+                .findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Credential not found with id " + groupId));
+
+        List<User> users = group.getUsers();
+        List<MemberResponse> members = new LinkedList<>();
+        for(User u : users) {
+            members.add(new MemberResponse(u.getUsername(), u.getGroup_user_role().get(group).getName().name()));
+        }
+        return ResponseEntity.ok(new ListMemberResponse(members));
     }
 
     @DeleteMapping("/deleteGroup/{id}")
@@ -135,7 +161,6 @@ public class GroupController {
     @PreAuthorize("@authorityChecker.hasTheAuthority(authentication, #groupId, 'group:modify')")
     public ResponseEntity<?> changePermission(@PathVariable Long groupId,
                                               @Valid @RequestBody ChangePermissionRequest request) {
-
         User user = userRepository.findByUsername(request.getUsernameToChange())
                 .orElseThrow(() -> new UsernameNotFoundException("Username not found: " + request.getUsernameToChange()));
 
@@ -146,6 +171,7 @@ public class GroupController {
                 .orElseThrow(() -> new RuntimeException("No role found"));
 
         user.getGroup_user_role().put(groups, role);
+        userRepository.save(user);
         return ResponseEntity.ok(new MessageResponse("Role changed successfully"));
     }
 
@@ -161,14 +187,19 @@ public class GroupController {
         Groups groups = groupRepository.findGroupsByJoinCode(request.getCode())
                 .orElseThrow(() -> new RuntimeException("Group not found with Join Code " + request.getCode()));
 
+        if(groups.getUsers().contains(user)) {
+            return ResponseEntity.badRequest().body(new MessageResponse("You are already in the group"));
+        }
+
         Role role = roleRepository.findByName(ERole.ROLE_GROUP_USER_BAS)
                 .orElseThrow(() -> new RuntimeException("No role found"));
 
         if(!user.addGroup(groups)) {
-            ResponseEntity
+            return ResponseEntity
                     .badRequest()
                     .body(new MessageResponse("Cannot add user " + user.getUsername() + " to group"));
         }
+
 
         Map<Groups, Role> groupsRoleMap = user.getGroup_user_role();
         groupsRoleMap.put(groups, role);
@@ -205,22 +236,35 @@ public class GroupController {
                     .body(new MessageResponse("Credentials for site " + url + " alrady exists"));
         }
 
+        Date currentDate = new Date();
         String encryptedPassword = encrypter.encrypt(request.getPassword(), secretKey);
         CredentialsGroup credentialsGroup = new CredentialsGroup(groups, url, request.getLogin(),
-                encryptedPassword, new Date());
+                encryptedPassword, currentDate);
         credentialsGroup.setUserLastChange(username);
         credentialsGroup.setUserCreator(username);
+        credentialsGroup.setDateLastModify(currentDate);
 
         credentialsGroupRepository.save(credentialsGroup);
-        return ResponseEntity.ok("Password saved successfully");
+        return ResponseEntity.ok(new MessageResponse("Password saved successfully"));
     }
 
+    @CrossOrigin(exposedHeaders = {"ETag"})
     @GetMapping("/getCredential/{groupId}/{credentialId}")
     @PreAuthorize("@authorityChecker.hasTheAuthority(authentication, #groupId, 'group:read')")
-    public ResponseEntity<?> getPassword(@PathVariable Long groupId, @PathVariable Long credentialId) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeySpecException, InvalidKeyException {
+    public ResponseEntity<?> getPassword(WebRequest webRequest, @PathVariable Long groupId, @PathVariable Long credentialId) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeySpecException, InvalidKeyException {
 
         CredentialsGroup credentialsGroup = credentialsGroupRepository.findById(credentialId)
                 .orElseThrow(() -> new RuntimeException("Credential not found"));
+
+        String ifMatchValue = webRequest.getHeader("If-Match");
+        if(ifMatchValue == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        if(!ifMatchValue.equals("\"" + credentialsGroup.getVersion() + "\"")) {
+            return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED).build();
+        }
+
 
         String password = encrypter.decrypt(credentialsGroup.getPassword(), secretKey);
         return ResponseEntity.ok()
@@ -235,7 +279,7 @@ public class GroupController {
         Groups groups = groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Group not found"));
 
-        Set<CredentialsGroup> allCredentials = groups.getCredentialsGroups();
+        List<CredentialsGroup> allCredentials = groups.getCredentialsGroups();
         List<CredentialsGroupResponse> credentials = new LinkedList<>();
         for (CredentialsGroup c: allCredentials) {
             String protocol = "";
@@ -243,8 +287,22 @@ public class GroupController {
             if(matcher.find()) {
                 protocol = matcher.group(2);
             }
+            String version = "\"" + c.getVersion() + "\"";
+
+            Date dateCreation = c.getCreationDateTime();
+            Date dateLastModify = c.getDateLastModify();
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String strDateCreation = dateFormat.format(dateCreation);
+            String strDateLastModify = dateFormat.format(dateLastModify);
+            String dayCreation = strDateCreation.substring(0,10);
+            String hoursCreation = strDateCreation.substring(11);
+            String dayLastModify = strDateLastModify.substring(0,10);
+            String hoursLastModify = strDateLastModify.substring(11);
+
+
             credentials.add(new CredentialsGroupResponse(c.getUrl(), c.getLogin(), protocol, c.getId(),
-                    c.getUserLastChange(), c.getDateLastModify(), c.getCreationDateTime(), c.getUserCreator()));
+                    c.getUserLastChange(), dayCreation, hoursCreation, dayLastModify, hoursLastModify,
+                    c.getUserCreator(), version));
         }
 
         return ResponseEntity.ok(new ListCredentialsGroupResponse(credentials));
@@ -265,7 +323,7 @@ public class GroupController {
     @PutMapping("/editGroupCredential/{groupId}/{credentialId}")
     @PreAuthorize("@authorityChecker.hasTheAuthority(authentication, #groupId, 'group:write')")
     public ResponseEntity<?> updateCredential(WebRequest webRequest, @PathVariable Long groupId,
-                                              @PathVariable Long credentialId, EditCredentialGroup request) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, NoSuchAlgorithmException, BadPaddingException, InvalidKeySpecException, InvalidParameterSpecException, InvalidKeyException {
+                                              @PathVariable Long credentialId,@Valid @RequestBody EditCredentialGroup request) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, NoSuchAlgorithmException, BadPaddingException, InvalidKeySpecException, InvalidParameterSpecException, InvalidKeyException {
 
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
@@ -313,29 +371,48 @@ public class GroupController {
                     .body(new MessageResponse("Note with title: " + title + " already exits"));
         }
 
+        Date currentDate = new Date();
         String encryptedNote = encrypter.encrypt(request.getContent(), secretKey);
-        SecureNotesGroup note = new SecureNotesGroup(groups, title, encryptedNote, new Date(), username);
+        SecureNotesGroup note = new SecureNotesGroup(groups, title, encryptedNote, currentDate, username);
+        note.setDateLastModify(currentDate);
         note.setUserLastChange(username);
-        return ResponseEntity.ok("Note create successfully");
+        secureNotesGroupRepository.save(note);
+        return ResponseEntity.ok(new MessageResponse("Note created successfully"));
     }
 
 
     @GetMapping("/getAllNotes/{groupId}")
     @PreAuthorize("@authorityChecker.hasTheAuthority(authentication, #groupId, 'group:read')")
-    public ResponseEntity<?> getAllNotes(@PathVariable Long groupId) {
+    public ResponseEntity<?> getAllNotes(@PathVariable Long groupId) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeySpecException, InvalidKeyException {
         Groups groups = groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Group not found"));
-
-        Set<SecureNotesGroup> notes = groups.getSecureNotesGroups();
+        List<SecureNotesGroup> notes = groups.getSecureNotesGroups();
         List<SecureNotesGroupResponse> secureNotesGroupResponses = new LinkedList<>();
         for (SecureNotesGroup s: notes) {
-            secureNotesGroupResponses.add(new SecureNotesGroupResponse(groupId, s.getTitle(), s.getUserLastChange(),
-                    s.getDateLastModify(), s.getCreationDateTime(), s.getUserCreator()));
+
+            String version = "\"" + s.getVersion() + "\"";
+
+            Date dateCreation = s.getCreationDateTime();
+            Date dateLastModify = s.getDateLastModify();
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String strDateCreation = dateFormat.format(dateCreation);
+            String strDateLastModify = dateFormat.format(dateLastModify);
+            String dayCreation = strDateCreation.substring(0,10);
+            String hoursCreation = strDateCreation.substring(11);
+            String dayLastModify = strDateLastModify.substring(0,10);
+            String hoursLastModify = strDateLastModify.substring(11);
+
+            String plainText = encrypter.decrypt(s.getContent(), secretKey);
+
+            secureNotesGroupResponses.add(new SecureNotesGroupResponse(s.getId(), s.getTitle(), s.getUserLastChange(),
+                    dayCreation, hoursCreation, dayLastModify, hoursLastModify, s.getUserCreator(), version, plainText));
         }
+
 
         return ResponseEntity.ok(new ListSecureNotesGroupResponse(secureNotesGroupResponses));
     }
 
+    @CrossOrigin(exposedHeaders = {"ETag"})
     @GetMapping("/getContent/{groupId}/{noteId}")
     @PreAuthorize("@authorityChecker.hasTheAuthority(authentication, #groupId, 'group:read')")
     public ResponseEntity<?> getContent(@PathVariable Long groupId, @PathVariable Long noteId) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeySpecException, InvalidKeyException {
@@ -365,7 +442,7 @@ public class GroupController {
     @PutMapping("/editNote/{groupId}/{noteId}")
     @PreAuthorize("@authorityChecker.hasTheAuthority(authentication, #groupId, 'group:write')")
     public ResponseEntity<?> updateNote(WebRequest webRequest, @PathVariable Long groupId,
-                                        @PathVariable Long noteId, EditoNoteGroupRequest request) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, NoSuchAlgorithmException, BadPaddingException, InvalidKeySpecException, InvalidParameterSpecException, InvalidKeyException {
+                                        @PathVariable Long noteId,@Valid @RequestBody EditoNoteGroupRequest request) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, NoSuchAlgorithmException, BadPaddingException, InvalidKeySpecException, InvalidParameterSpecException, InvalidKeyException {
 
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
@@ -387,6 +464,7 @@ public class GroupController {
             secureNotesGroup.setContent(encryptedContent);
             secureNotesGroup.setDateLastModify(new Date());
             secureNotesGroup.setUserLastChange(username);
+            secureNotesGroupRepository.save(secureNotesGroup);
             return ResponseEntity.ok()
                     .eTag("\"" + secureNotesGroup.getVersion() + "\"")
                     .body(new MessageResponse("Note update successfully"));

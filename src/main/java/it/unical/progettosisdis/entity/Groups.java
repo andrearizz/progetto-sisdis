@@ -3,9 +3,7 @@ package it.unical.progettosisdis.entity;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 public class Groups {
@@ -21,13 +19,13 @@ public class Groups {
     private String joinCode;
 
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "groups")
-    private Set<User> users = new HashSet<>();
+    private List<User> users = new LinkedList<>();
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "groups", targetEntity = CredentialsGroup.class, cascade = CascadeType.REMOVE)
-    private Set<CredentialsGroup> credentialsGroups;
+    private List<CredentialsGroup> credentialsGroups;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "groups", targetEntity = SecureNotesGroup.class, cascade = CascadeType.REMOVE)
-    private Set<SecureNotesGroup> secureNotesGroups;
+    private List<SecureNotesGroup> secureNotesGroups;
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date creationDateTime;
@@ -68,28 +66,28 @@ public class Groups {
         this.joinCode = joinCode;
     }
 
-    public Set<User> getUsers() {
+    public List<User> getUsers() {
         return users;
     }
 
-    public void setUsers(Set<User> users) {
+    public void setUsers(List<User> users) {
         this.users = users;
     }
 
 
-    public Set<CredentialsGroup> getCredentialsGroups() {
+    public List<CredentialsGroup> getCredentialsGroups() {
         return credentialsGroups;
     }
 
-    public void setCredentialsGroups(Set<CredentialsGroup> credentialsGroups) {
+    public void setCredentialsGroups(List<CredentialsGroup> credentialsGroups) {
         this.credentialsGroups = credentialsGroups;
     }
 
-    public Set<SecureNotesGroup> getSecureNotesGroups() {
+    public List<SecureNotesGroup> getSecureNotesGroups() {
         return secureNotesGroups;
     }
 
-    public void setSecureNotesGroups(Set<SecureNotesGroup> secureNotesGroups) {
+    public void setSecureNotesGroups(List<SecureNotesGroup> secureNotesGroups) {
         this.secureNotesGroups = secureNotesGroups;
     }
 
