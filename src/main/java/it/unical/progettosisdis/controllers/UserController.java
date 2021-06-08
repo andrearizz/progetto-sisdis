@@ -7,7 +7,6 @@ import it.unical.progettosisdis.payload.credentials.request.EditRequest;
 import it.unical.progettosisdis.payload.credentials.request.SavePwRequest;
 import it.unical.progettosisdis.payload.credentials.request.SeePwRequest;
 import it.unical.progettosisdis.payload.credentials.response.CredentialsResponse;
-import it.unical.progettosisdis.payload.ETagProvaResponse;
 import it.unical.progettosisdis.payload.credentials.response.ListCredentianlsResponse;
 import it.unical.progettosisdis.payload.MessageResponse;
 import it.unical.progettosisdis.repository.CredentialsRepository;
@@ -186,17 +185,7 @@ public class UserController {
         credentialsRepository.save(credentials);
         return ResponseEntity.ok(new MessageResponse("Credential modified successfully!"));
     }
-
-    @GetMapping("/getETag/{id}")
-    public ResponseEntity<?> getETag(@PathVariable Long id) {
-        Credentials credentials = credentialsRepository
-                .findCredentialsById(id)
-                .orElseThrow(() -> new RuntimeException("Credential not found with id " + id));
-
-        return ResponseEntity.ok()
-                .eTag("\"" + "provaVersion" + "\"")
-                .body(new ETagProvaResponse(credentials.getUrl(), credentials.getLogin(), credentials.getPassword()));
-    }
+    /*
 
     @PutMapping("/putETag/{id}")
     public ResponseEntity<?> putETag(WebRequest request, @PathVariable Long id, @Valid @RequestBody EditRequest ereq) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, NoSuchAlgorithmException, BadPaddingException, InvalidKeySpecException, InvalidParameterSpecException, InvalidKeyException {
@@ -236,5 +225,7 @@ public class UserController {
         }
 
     }
+
+     */
 
 }
